@@ -62,7 +62,7 @@ CCTV: new recording segments should appear every ~10 s per camera under
 | 05:27 | Immich Postgres crash recovery OK. |
 | 05:58 | Frigate recording again (CCTV gap 05:15–05:58). |
 | ~06:10 | Seerr answering, last app up. Still heavy swapping: the working set didn't fit in 8 GB and the swap file sits on the slow OS disk. |
-| ~06:20 | **Added zram** (compressed swap in RAM): swap-outs to disk went from ~300/s to 0, load fell from ~13 to ~5. The old swap file was then drained back into RAM in one pass (`swapoff` + `swapon`). |
+| ~06:20 | **Added zram** (compressed swap in RAM): swap-outs to disk went from ~300/s to 0, load fell from ~13 to ~5. The 1.7 GB already in the swap file is left there and comes back on demand: draining it with `swapoff` ran at only ~14 MB/min on this disk (~2 h of a saturated disk for mostly-cold pages), so it was cancelled. |
 
 Also found and fixed while checking:
 
