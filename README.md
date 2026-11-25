@@ -17,6 +17,23 @@ live only on the server in git-ignored `.env` files).
 
 - 4-thread Intel i3 (Skylake) with HD Graphics 510 (Quick Sync / OpenVINO), 8 GB RAM, Ubuntu, Docker + Compose.
 - Remote access: Tailscale (private) and Cloudflare Tunnel (public, see homelab-edge).
+- After a power cut everything comes back by itself; see
+  [docs/runbooks/power-cut.md](docs/runbooks/power-cut.md) for what to expect and how to check.
+
+Host files in [`host/`](host/), and where each one is installed:
+
+| File | Installed as | Why |
+|---|---|---|
+| `fstab.example` | `/etc/fstab` | disks by UUID, mergerfs pool that refuses to start without its disk |
+| `smartd.conf` | `/etc/smartd.conf` | SMART monitoring and self-tests, per disk |
+| `zram-generator.conf` | `/etc/systemd/zram-generator.conf` (`apt install systemd-zram-generator`) | compressed swap in RAM, ahead of the swap file on the slow OS disk |
+| `sysctl-zram.conf` | `/etc/sysctl.d/92-zram.conf` | swap tuning that goes with zram |
+| `sysctl-inotify.conf` | `/etc/sysctl.d/91-inotify.conf` | enough file watchers for Immich's library watcher |
+| `sysctl-reserved-ports.conf` | `/etc/sysctl.d/90-reserved-ports.conf` | keeps listening ports out of the ephemeral range |
+| `systemd/docker.service.d/` | `/etc/systemd/system/docker.service.d/` | Docker waits for the pool, never gives up restarting |
+| `systemd/containerd.service.d/` | `/etc/systemd/system/containerd.service.d/` | containerd gets time to start on the slow OS disk |
+
+After copying: `sudo systemctl daemon-reload && sudo sysctl --system && sudo systemctl restart smartd`.
 
 ## Storage
 
@@ -46,7 +63,8 @@ Rules that keep data safe:
    immutable (`chattr +i`), so nothing can silently write into the OS disk if a
    disk doesn't mount.
 3. **Databases don't live on mergerfs.** Immich's Postgres points at the disk path directly.
-4. **SMART is monitored** (`host/smartd.conf`): daily short test, weekly long test.
+4. **SMART is monitored** (`host/smartd.conf`): daily short test, monthly long
+   test; the failing recovery disk is only watched, never tested.
 
 See [docs/disks.md](docs/disks.md) for the current health of every disk and
 [docs/runbooks/add-a-disk.md](docs/runbooks/add-a-disk.md) for replacing one.
