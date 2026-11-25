@@ -30,10 +30,11 @@ Host files in [`host/`](host/), and where each one is installed:
 | `sysctl-zram.conf` | `/etc/sysctl.d/92-zram.conf` | swap tuning that goes with zram |
 | `sysctl-inotify.conf` | `/etc/sysctl.d/91-inotify.conf` | enough file watchers for Immich's library watcher |
 | `sysctl-reserved-ports.conf` | `/etc/sysctl.d/90-reserved-ports.conf` | keeps listening ports out of the ephemeral range |
+| `resolved.conf.d/cloudflare.conf` | `/etc/systemd/resolved.conf.d/cloudflare.conf` | every DNS lookup (host and containers) goes to public resolvers, never the ISP's, which answers torrent sites with a block page |
 | `systemd/docker.service.d/` | `/etc/systemd/system/docker.service.d/` | Docker waits for the pool, never gives up restarting |
 | `systemd/containerd.service.d/` | `/etc/systemd/system/containerd.service.d/` | containerd gets time to start on the slow OS disk |
 
-After copying: `sudo systemctl daemon-reload && sudo sysctl --system && sudo systemctl restart smartd`.
+After copying: `sudo systemctl daemon-reload && sudo sysctl --system && sudo systemctl restart smartd systemd-resolved`.
 
 ## Storage
 

@@ -77,3 +77,34 @@ Also found and fixed while checking:
 Verified afterwards: all 20 SQLite app databases pass `PRAGMA quick_check`,
 Postgres recovered cleanly, no container logged database errors, settings of
 qBittorrent/Jellyfin/Radarr/Sonarr/Prowlarr/Bazarr intact, public URLs up.
+
+## 2026-11-25, second power cut (11:18–15:29 UTC)
+
+Both machines were off for about four hours. This boot used the fixes above:
+containerd needed 3 min 53 s to open its metadata DB and was not killed, Docker
+started at 15:34, and all 45 containers came back healthy with zram in use. No
+unit failed.
+
+What it turned up was in the indexers. Radarr reported *Indexers unavailable
+due to failures for more than 6 hours* for 1337x, Torrent Downloads and
+Internet Archive:
+
+- **DNS.** systemd-resolved sent every lookup both to the public resolvers and
+  to the router, which forwards to the ISP's resolver, and used whichever
+  answered first. The ISP's resolver answers torrent sites with a CNAME to its
+  block page, so whenever the router won, Prowlarr failed with
+  `RemoteCertificateNameMismatch`. **Fixed:** `Domains=~.` in
+  [`host/resolved.conf.d/cloudflare.conf`](../../host/resolved.conf.d/cloudflare.conf),
+  which sends every name to the public resolvers. Containers use the host's
+  resolver, so they are covered too.
+- **Byparr** (on donutmaster) kept hitting its 2 GB memory cap, and its browser
+  profiles piled up on that machine's nearly full SSD. A Cloudflare solve took
+  2–3 minutes, longer than Prowlarr's 120 s proxy timeout. **Fixed:** 4 GB
+  cap, profiles on a RAM disk, public DNS; solves now take ~15–45 s (homelab-media
+  `remote/byparr/`).
+- **Internet Archive** stalls every request whose user agent says Prowlarr.
+  That is on archive.org's side, so the indexer is disabled in Prowlarr.
+
+Once an indexer recovers, testing it in Radarr and Sonarr (Settings → Indexers
+→ Test) clears their backoff straight away. Otherwise they wait until it expires,
+which takes up to 24 h after repeated failures.
