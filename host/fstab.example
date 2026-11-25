@@ -1,0 +1,19 @@
+# Data disks + mergerfs pool (append to /etc/fstab; find UUIDs with `lsblk -f`).
+#
+# Each data disk mounts at /mnt/diskN. `nofail` lets the machine boot without it;
+# the pool line below then refuses to start (x-systemd.requires-mounts-for), and
+# the empty mount points are made immutable so nothing can write into the OS disk:
+#   sudo umount /mnt/storage /mnt/diskN; sudo chattr +i /mnt/storage /mnt/diskN; sudo mount -a
+UUID=<disk2-uuid>  /mnt/disk2  ext4  defaults,nofail  0  2
+# UUID=<disk3-uuid>  /mnt/disk3  ext4  defaults,nofail  0  2
+
+# Pool. Add a new disk by appending it to the branch list (/mnt/disk2:/mnt/disk3)
+# and to x-systemd.requires-mounts-for. category.create=mfs puts new files on the
+# disk with the most free space; it is not path-preserving, so hardlinks and
+# renames between folders keep working.
+/mnt/disk2  /mnt/storage  fuse.mergerfs  defaults,allow_other,use_ino,category.create=mfs,moveonenospc=true,minfreespace=20G,fsname=mergerfs,x-systemd.requires-mounts-for=/mnt/disk2  0  0
+
+# Old data-recovery disk with a damaged filesystem: never mounted at boot (its fsck
+# would fail every boot), read-only and without journal replay when mounted by hand:
+#   sudo mount /mnt/recovery
+UUID=<recovery-uuid>  /mnt/recovery  ext4  ro,noload,noauto,nofail  0  0
