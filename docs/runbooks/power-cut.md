@@ -14,7 +14,7 @@ and what happened the last time.
 | Containers | every container with `restart: unless-stopped` / `always` starts again. Opt-in ones stay off: Byparr, Cleanuparr and Immich's local machine learning only exist when started with their compose profile. |
 | Databases | the SQLite apps and Immich's Postgres recover themselves (Postgres logs `automatic recovery in progress` … `ready to accept connections`). |
 | Memory | zram swap is created at every boot ([`host/zram-generator.conf`](../../host/zram-generator.conf)). |
-| Second machine | donutmaster has Docker enabled; Byparr and the remote Immich ML start with it. |
+| Second machine | donutmaster has Docker enabled; Byparr, the remote Immich ML and the yt-dlp runner (Aurral's YouTube lookups) start with it. While it's down, Aurral does those lookups on the main server again. |
 
 ## How long it takes
 
